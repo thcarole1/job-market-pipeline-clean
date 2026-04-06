@@ -56,5 +56,5 @@ async def pipeline_complet_wttj(mots_cles: str = "data engineer", nb_pages: int 
 if __name__ == "__main__":
     asyncio.run(pipeline_complet_wttj(
         mots_cles="data engineer",
-        nb_pages=3,
+        nb_pages=10,
     ))

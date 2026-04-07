@@ -10,14 +10,14 @@ from ingestion.normalizer.pipeline_normalizer import pipeline_normalisation
 if __name__ == "__main__":
 
     # ── Mots Clés  ────────────────────────
-    mots_cles    = "data analyst"
+    mots_cles    = "data engineer"
 
     # ── Appel API France Travail  ────────────────────────
     print("\n=== Appel API France Travail ===")
 
     pipeline_complet(
         mots_cles    = mots_cles,
-        nb_pages_max = 20,
+        nb_pages_max = 10,
         avec_details = False,  # passer à True pour les descriptions complètes
     )
 

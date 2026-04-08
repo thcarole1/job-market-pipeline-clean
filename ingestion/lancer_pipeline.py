@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     pipeline_complet(
         mots_cles    = mots_cles,
-        nb_pages_max = 10,
+        nb_pages_max = 1,
         avec_details = False,  # passer à True pour les descriptions complètes
     )
 
@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     asyncio.run(pipeline_complet_wttj(
         mots_cles= mots_cles,
-        nb_pages=10,
+        nb_pages=1,
     ))
 
     # ── Normalisation Sources de données  ────────────────────────
@@ -55,3 +55,6 @@ if __name__ == "__main__":
         print("Lance d'abord extractor.py pour FranceTravail et WTTJ.")
     else:
         pipeline_normalisation(fichiers, valider=True)
+
+# Insertion en base mongodb
+# insertion en base SQL

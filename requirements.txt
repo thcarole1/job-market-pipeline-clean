@@ -15,6 +15,7 @@ comm==0.2.3
 debugpy==1.8.20
 decorator==5.2.1
 defusedxml==0.7.1
+dnspython==2.8.0
 dotenv==0.9.9
 executing==2.2.1
 fastjsonschema==2.21.2
@@ -68,6 +69,7 @@ pure_eval==0.2.3
 pycparser==3.0
 pyee==13.0.1
 Pygments==2.20.0
+pymongo==4.16.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
 python-json-logger==4.1.0

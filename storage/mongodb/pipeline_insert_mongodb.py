@@ -74,3 +74,12 @@ if __name__ == "__main__":
 
     # affichage rapport final
     print(rapport_global)
+
+
+'''
+Lancer le pipelin d'insertion en base MongoDB
+
+python -m storage.mongodb.pipeline_insert_mongodb
+
+
+'''

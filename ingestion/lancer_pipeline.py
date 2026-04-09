@@ -56,5 +56,8 @@ if __name__ == "__main__":
     else:
         pipeline_normalisation(fichiers, valider=True)
 
-# Insertion en base mongodb
-# insertion en base SQL
+'''
+Lancer le pipeline de récupération de données
+python -m ingestion.lancer_pipeline
+
+'''

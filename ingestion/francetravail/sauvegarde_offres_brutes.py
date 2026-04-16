@@ -24,7 +24,8 @@ def sauvegarder_brut(offres: list, mots_cles: str = "", timestamp: str = None) -
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     slug      = mots_cles.replace(" ", "_") if mots_cles else "offres"
-    chemin    = f"data/raw/francetravail/{slug}_{timestamp}.json"
+    chemin    = f"data/raw/francetravail/offres_{timestamp}.json"
+    # chemin    = f"data/raw/francetravail/{slug}_{timestamp}.json"
 
     with open(chemin, "w", encoding="utf-8") as f:
         json.dump(offres, f, ensure_ascii=False, indent=2)

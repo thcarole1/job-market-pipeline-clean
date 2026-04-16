@@ -1,22 +1,10 @@
 
 from pathlib import Path
 import json
-import os
-from pymongo import MongoClient
-from dotenv import load_dotenv
 
-load_dotenv()
-
+from config import RACINE
 from storage.mongodb.insert_offres_mongodb import inserer_offres
 from storage.mongodb.connecter_mongodb import connecter_mongodb
-
-# Racine du projet — calculée depuis l'emplacement de ce fichier
-# Ce fichier est dans storage/mongodb/pipeline.py
-# .parent       → storage/mongodb/
-# .parent.parent → storage/
-# .parent.parent.parent → racine du projet
-RACINE = Path(__file__).parent.parent.parent
-
 
 
 def pipeline_insertion_mongodb(collection):

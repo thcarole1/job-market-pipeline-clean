@@ -1,26 +1,16 @@
 # storage/sql/create_tables.py
-
 import psycopg2
-import os
-from pathlib import Path
-from dotenv import load_dotenv
-
-load_dotenv()
-
-# Chemin vers le fichier schema.sql
-SCHEMA_PATH = Path(__file__).parent / "schema.sql"
-
+from config import POSTGRES_HOST,POSTGRES_PORT,POSTGRES_DB,POSTGRES_USER,POSTGRES_PASSWORD,SCHEMA_PATH
 
 def connecter_postgresql():
     """Crée et retourne une connexion PostgreSQL."""
     return psycopg2.connect(
-        host     = os.getenv("POSTGRES_HOST", "localhost"),
-        port     = int(os.getenv("POSTGRES_PORT", 5432)),
-        dbname   = os.getenv("POSTGRES_DB", "job_market"),
-        user     = os.getenv("POSTGRES_USER"),
-        password = os.getenv("POSTGRES_PASSWORD"),
+        host     = POSTGRES_HOST,
+        port     = POSTGRES_PORT,
+        dbname   = POSTGRES_DB,
+        user     = POSTGRES_USER,
+        password = POSTGRES_PASSWORD,
     )
-
 
 def creer_tables():
     """

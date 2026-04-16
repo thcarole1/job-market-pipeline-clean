@@ -1,16 +1,21 @@
-
 import json
-from storage.sql.inserer_batch_postgresql import inserer_batch_postgresql
-from config import RACINE
+from config import NOM_INDEX, RACINE
+
+from  storage.elasticsearch.connecter_elasticsearch import connecter_elasticsearch
+from storage.elasticsearch.creer_index_elasticsearch import creer_index
+from storage.elasticsearch.indexer_offres import indexer_offres
 
 # ─────────────────────────────────────────────────────────────
-# PIPELINE SOURCE PAR SOURCE
+# PIPELINE COMPLET
 # ─────────────────────────────────────────────────────────────
 
-def pipeline_insertion_postgresql() -> dict:
+def pipeline_indexation_elasticsearch() -> dict:
     """
-    Charge les fichiers normalisés et les insère dans PostgreSQL
-    source par source.
+    Pipeline complet :
+        1. Connexion à Elasticsearch
+        2. Création de l'index si absent
+        3. Chargement des fichiers normalisés
+        4. Indexation source par source
     """
     # sources = [
     #     ("FranceTravail", RACINE / "data" / "processed" / "francetravail"),
@@ -21,8 +26,14 @@ def pipeline_insertion_postgresql() -> dict:
 
     rapport_final = {}
 
+    # Connexion
+    client = connecter_elasticsearch()
+
+    # Créer l'index si absent
+    creer_index(client)
+
     for nom_source, dossier in sources:
-        print(f"\n=== Insertion PostgreSQL — {nom_source} ===")
+        print(f"\n=== Indexation Elasticsearch — {nom_source} ===")
 
         try:
             fichiers = sorted(dossier.glob("*.json"))
@@ -35,20 +46,20 @@ def pipeline_insertion_postgresql() -> dict:
 
             print(f"{len(offres)} offres chargées")
 
-            rapport = inserer_batch_postgresql(offres)
+            rapport = indexer_offres(offres, client)
             rapport_final[nom_source] = rapport
 
-            print(f"Offres insérées  : {rapport['offres_inserees']}")
-            print(f"Doublons ignorés : {rapport['offres_doublons']}")
-            print(f"Compétences      : {rapport['competences_inserees']}")
-            print(f"Missions         : {rapport['missions_inserees']}")
-            print(f"Avantages        : {rapport['avantages_inseres']}")
-            print(f"Erreurs          : {rapport['erreurs']}")
+            print(f"Indexés  : {rapport['indexes']}")
+            print(f"Erreurs  : {rapport['erreurs']}")
 
         except Exception as e:
             print(f"Erreur sur {nom_source} : {e}")
             rapport_final[nom_source] = {"erreur": str(e)}
             continue
+
+    # # Vérification finale
+    # total = client.count(index=NOM_INDEX)["count"]
+    # print(f"\nTotal documents dans l'index '{NOM_INDEX}' : {total}")
 
     return rapport_final
 
@@ -58,16 +69,9 @@ def pipeline_insertion_postgresql() -> dict:
 # ─────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    rapport = pipeline_insertion_postgresql()
+    rapport = pipeline_indexation_elasticsearch()
     print("\n=== Rapport final ===")
     print(rapport)
 
-
-'''
-# Créer les tables si pas encore fait
-python -m storage.sql.creer_tables_sql
-
-# Insérer les données
-python -m storage.sql.pipeline_insertion_postgresql
-
-'''
+# Pour lancer l'indexation
+# python -m storage.elasticsearch.pipeline_insert_elasticsearch

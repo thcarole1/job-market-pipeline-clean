@@ -5,19 +5,24 @@ from ingestion.francetravail.pipeline_complet import pipeline_complet
 from ingestion.welcometothejungle.pipeline_complet_wttj import pipeline_complet_wttj
 from ingestion.normalizer.pipeline_normalizer import pipeline_normalisation
 
+'''
+Lancer le pipeline de récupération de données
+python -m ingestion.lancer_pipeline
 
+'''
 
 if __name__ == "__main__":
 
     # ── Mots Clés  ────────────────────────
-    mots_cles    = "data engineer"
+    mots_cles = "data analyst"
+    NB_PAGES = 10
 
     # ── Appel API France Travail  ────────────────────────
     print("\n=== Appel API France Travail ===")
 
     pipeline_complet(
         mots_cles    = mots_cles,
-        nb_pages_max = 1,
+        nb_pages_max = NB_PAGES,
         avec_details = False,  # passer à True pour les descriptions complètes
     )
 
@@ -26,7 +31,7 @@ if __name__ == "__main__":
 
     asyncio.run(pipeline_complet_wttj(
         mots_cles= mots_cles,
-        nb_pages=1,
+        nb_pages=NB_PAGES,
     ))
 
     # ── Normalisation Sources de données  ────────────────────────

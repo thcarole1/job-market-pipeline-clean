@@ -45,3 +45,10 @@ ELASTIC_HOST = os.getenv("ELASTIC_HOST", "localhost")
 ELASTIC_PORT = int(os.getenv("ELASTIC_PORT", 9200))
 NOM_INDEX = "offres"
 SCHEMA_PATH = RACINE / "storage/sql/schema.sql"
+
+# ─────────────────────────────────────────────────────────────
+# POINT D'ENTRÉE
+# ─────────────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    print(RACINE)

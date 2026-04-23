@@ -10,6 +10,7 @@
 data/raw/
 data/processed/
 data/normalise/
+data/ml/dataset
 
 # Cache Python
 __pycache__/
@@ -27,3 +28,6 @@ Thumbs.db
 #par Python lorsqu'un package est installé en mode développement avec :pip install -e .
 #ou lorsque vous avez un fichier `setup.py` ou `setup.cfg` dans votre projet.
 *.egg-info/
+
+
+fichiers_lourds.txt

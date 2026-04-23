@@ -46,6 +46,11 @@ ELASTIC_PORT = int(os.getenv("ELASTIC_PORT", 9200))
 NOM_INDEX = "offres"
 SCHEMA_PATH = RACINE / "storage/sql/schema.sql"
 
+
+
+# Nombre de pages d'offres à extraire (pagination)
+NB_PAGES = 5
+
 # ─────────────────────────────────────────────────────────────
 # POINT D'ENTRÉE
 # ─────────────────────────────────────────────────────────────

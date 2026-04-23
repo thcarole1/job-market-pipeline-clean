@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime
+from config import NB_PAGES
 
 from ingestion.welcometothejungle.scraper import scraper_wttj
 from ingestion.welcometothejungle.sauvegarde_offres_brutes_wttj import sauvegarder_brut
@@ -7,7 +8,7 @@ from ingestion.welcometothejungle.parser_offres_brutes_wttj import parser_brutes
 from ingestion.welcometothejungle.sauvegarde_offres_processed_wttj import sauvegarder_processed
 
 
-async def pipeline_complet_wttj(mots_cles: str = "data engineer", nb_pages: int = 3):
+async def pipeline_complet_wttj(mots_cles: str = "data engineer", nb_pages: int = 2):
     """
     Pipeline complet : scraping → parsing → sauvegarde.
 
@@ -23,7 +24,7 @@ async def pipeline_complet_wttj(mots_cles: str = "data engineer", nb_pages: int 
 
     # ── Étape 1 : Scraping ────────────────────────────────
     print("=== ÉTAPE 1 : Scraping ===")
-    offres_brutes = await scraper_wttj(nb_pages=nb_pages)
+    offres_brutes = await scraper_wttj(nb_pages=NB_PAGES)
 
     if not offres_brutes:
         print("Aucune offre récupérée. Arrêt.")
@@ -56,5 +57,5 @@ async def pipeline_complet_wttj(mots_cles: str = "data engineer", nb_pages: int 
 if __name__ == "__main__":
     asyncio.run(pipeline_complet_wttj(
         mots_cles="data engineer",
-        nb_pages=10,
+        nb_pages=NB_PAGES,
     ))

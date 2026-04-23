@@ -49,7 +49,7 @@ def inserer_offre(offre: dict, cursor) -> bool:
             offre.get("nb_employes"),
             offre.get("date_publication"),
             offre.get("date_extraction"),
-            offre.get("url"),
+            offre.get("url")
         ))
         return cursor.rowcount > 0
 

@@ -17,7 +17,8 @@ def pipeline_insertion_postgresql() -> dict:
     #     ("WTTJ",          RACINE / "data" / "processed" / "welcometothejungle"),
     # ]
 
-    sources = [("Offres normalisées", RACINE / "data" / "processed" / "normalise"),]
+    #sources = [("Offres normalisées", RACINE / "data" / "processed" / "normalise"),]
+    sources = [("Offres normalisées", RACINE / "data" / "ml" / "dataset"),]
 
     rapport_final = {}
 
@@ -25,13 +26,24 @@ def pipeline_insertion_postgresql() -> dict:
         print(f"\n=== Insertion PostgreSQL — {nom_source} ===")
 
         try:
-            fichiers = sorted(dossier.glob("*.json"))
+            #fichiers = sorted(dossier.glob("*.json"))
+            fichiers = sorted(dossier.glob("*.jsonl"))
             if not fichiers:
                 print(f"Aucun fichier trouvé pour {nom_source}")
                 continue
-
+            '''
             with open(fichiers[-1], "r", encoding="utf-8") as f:
                 offres = json.load(f)
+
+            '''
+
+            # JSONL — une ligne = un objet JSON
+            offres = []
+            with open(fichiers[-1], "r", encoding="utf-8") as f:
+                for ligne in f:
+                    ligne = ligne.strip()
+                    if ligne:  # ignorer les lignes vides
+                        offres.append(json.loads(ligne))  # loads et non load
 
             print(f"{len(offres)} offres chargées")
 

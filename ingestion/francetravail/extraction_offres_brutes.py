@@ -1,6 +1,7 @@
 import time
 
 from ingestion.francetravail.api_client import FranceTravailClient
+from config import NB_PAGES
 
 # Nombre maximum d'offres par page autorisé par l'API FranceTravail
 PAGE_SIZE = 100
@@ -27,7 +28,7 @@ def extraire_offres(
     offres = []
     page   = 0
 
-    while page < nb_pages_max:
+    while page < NB_PAGES:
         debut = page * PAGE_SIZE
         fin   = debut + PAGE_SIZE - 1
 

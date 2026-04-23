@@ -45,6 +45,18 @@ CREATE TABLE IF NOT EXISTS avantages (
     avantage    VARCHAR(500) NOT NULL
 );
 
+-- storage/sql/schema.sql — ajouter cette table
+
+CREATE TABLE IF NOT EXISTS ml_labels (
+    id              SERIAL      PRIMARY KEY,
+    offre_id        VARCHAR     NOT NULL REFERENCES offres(id) ON DELETE CASCADE,
+    ml_keyword      VARCHAR     NOT NULL,
+    ml_label_binaire  SMALLINT  NOT NULL CHECK (ml_label_binaire IN (0, 1)),
+    ml_label_categorie VARCHAR  NOT NULL CHECK (ml_label_categorie IN ('data', 'non_data')),
+    date_collecte   TIMESTAMP   DEFAULT NOW(),
+    UNIQUE (offre_id, ml_keyword)  -- évite les doublons
+);
+
 -- ─────────────────────────────────────────────
 -- Index pour accélérer les requêtes fréquentes
 -- ─────────────────────────────────────────────
@@ -72,3 +84,9 @@ CREATE INDEX IF NOT EXISTS idx_missions_offre_id
 
 CREATE INDEX IF NOT EXISTS idx_avantages_offre_id
     ON avantages(offre_id);
+
+CREATE INDEX IF NOT EXISTS idx_ml_labels_offre_id
+    ON ml_labels(offre_id);
+
+CREATE INDEX IF NOT EXISTS idx_ml_labels_categorie
+    ON ml_labels(ml_label_categorie);

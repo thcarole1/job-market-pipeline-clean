@@ -29,5 +29,4 @@ Thumbs.db
 #ou lorsque vous avez un fichier `setup.py` ou `setup.cfg` dans votre projet.
 *.egg-info/
 
-
 fichiers_lourds.txt

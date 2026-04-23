@@ -2,6 +2,7 @@ from storage.sql.insert_offre import inserer_offre
 from storage.sql.insert_competences import inserer_competences
 from storage.sql.insert_missions import inserer_missions
 from storage.sql.insert_avantages import inserer_avantages
+from storage.sql.insert_ml_labels import inserer_ml_labels
 
 # ─────────────────────────────────────────────────────────────
 # PIPELINE COMPLET — UNE OFFRE
@@ -33,5 +34,8 @@ def inserer_offre_complete(offre: dict, cursor) -> dict:
     rapport["competences"] = inserer_competences(offre, cursor)
     rapport["missions"]    = inserer_missions(offre, cursor)
     rapport["avantages"]   = inserer_avantages(offre, cursor)
+
+    # 3. Insérer les labels pour le machine learning
+    rapport["ml_labels"]   = inserer_ml_labels(offre, cursor)
 
     return rapport

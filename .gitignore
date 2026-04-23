@@ -11,8 +11,6 @@ data/raw/
 data/processed/
 data/normalise/
 data/ml/dataset
-data/ml
-data
 
 # Cache Python
 __pycache__/

@@ -90,6 +90,7 @@ def reset_postgresql():
     # Les tables avec clés étrangères doivent être supprimées avant
     # les tables qu'elles référencent
     TABLES = [
+        "ml_labels",
         "avantages",     # référence offres
         "missions",      # référence offres
         "competences",   # référence offres

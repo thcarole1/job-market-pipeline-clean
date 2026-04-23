@@ -1,5 +1,6 @@
 import asyncio
 from playwright.async_api import async_playwright
+from config import NB_PAGES
 
 async def scraper_wttj(nb_pages: int = 3) -> list:
     """
@@ -45,8 +46,8 @@ async def scraper_wttj(nb_pages: int = 3) -> list:
 
         await page.wait_for_timeout(2000)
 
-        for numero_page in range(nb_pages):
-            print(f"Page {numero_page + 1}/{nb_pages}...")
+        for numero_page in range(NB_PAGES):
+            print(f"Page {numero_page + 1}/{NB_PAGES}...")
 
             try:
                 resultats = await page.evaluate(f"""

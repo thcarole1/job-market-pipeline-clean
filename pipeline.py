@@ -16,7 +16,7 @@ import time
 from pathlib import Path
 import asyncio
 
-from config import RACINE
+from config import RACINE, NB_PAGES
 # RACINE = Path(__file__).parent
 
 
@@ -32,13 +32,6 @@ logging.basicConfig(
         logging.FileHandler("logs/pipeline.log"),
     ]
 )
-
-
-# ─────────────────────────────────────────────────────────────
-# Critères de recherche
-# ─────────────────────────────────────────────────────────────
-MOTS_CLES = "électricien"
-NB_PAGES = 15
 
 # ─────────────────────────────────────────────────────────────
 # UTILITAIRES
@@ -59,7 +52,9 @@ def etape(numero: int, message: str):
 # PIPELINE
 # ─────────────────────────────────────────────────────────────
 
-def pipeline_complet(reset: bool = False, skip_extract: bool = False) -> dict:
+def pipeline_complet(reset: bool = False,
+                     skip_extract: bool = False,
+                     keyword:      str  = "data engineer") -> dict:
 
     debut = time.time()
     titre("JOB MARKET PIPELINE — Démarrage")
@@ -83,8 +78,8 @@ def pipeline_complet(reset: bool = False, skip_extract: bool = False) -> dict:
     if not skip_extract:
         etape(1, "Extraction FranceTravail")
         try:
-            from ingestion.francetravail.pipeline_complet import pipeline_complet as pipeline_ft
-            pipeline_ft(MOTS_CLES, NB_PAGES)
+            from ingestion.francetravail.pipeline_complet_ft import pipeline_complet_ft as pipeline_ft
+            pipeline_ft(keyword, NB_PAGES)
             rapport_final["etapes"]["extraction_ft"] = "OK"
         except Exception as e:
             logging.error(f"Extraction FT échouée : {e}")
@@ -94,7 +89,7 @@ def pipeline_complet(reset: bool = False, skip_extract: bool = False) -> dict:
         etape(2, "Extraction WTTJ")
         try:
             from ingestion.welcometothejungle.pipeline_complet_wttj import pipeline_complet_wttj as pipeline_wttj
-            asyncio.run(pipeline_wttj(MOTS_CLES, NB_PAGES))
+            asyncio.run(pipeline_wttj(keyword, NB_PAGES))
             rapport_final["etapes"]["extraction_wttj"] = "OK"
         except Exception as e:
             logging.error(f"Extraction WTTJ échouée : {e}")
@@ -158,6 +153,7 @@ def pipeline_complet(reset: bool = False, skip_extract: bool = False) -> dict:
     duree = time.time() - debut
     titre(f"Pipeline terminé en {duree:.1f}s")
     logging.info(f"Rapport : {rapport_final}")
+    rapport_final["keyword"] = keyword
 
     return rapport_final
 
@@ -198,6 +194,7 @@ if __name__ == "__main__":
         rapport = pipeline_complet(
             reset        = args.reset,
             skip_extract = args.skip_extract,
+            keyword = "data engineer"
         )
         sys.exit(0 if rapport["succes"] else 1)
 

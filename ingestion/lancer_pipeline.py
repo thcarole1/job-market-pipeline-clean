@@ -1,7 +1,7 @@
 
 import asyncio
 from pathlib import Path
-from ingestion.francetravail.pipeline_complet import pipeline_complet
+from ingestion.francetravail.pipeline_complet_ft import pipeline_complet_ft
 from ingestion.welcometothejungle.pipeline_complet_wttj import pipeline_complet_wttj
 from ingestion.normalizer.pipeline_normalizer import pipeline_normalisation
 
@@ -10,17 +10,14 @@ Lancer le pipeline de récupération de données
 python -m ingestion.lancer_pipeline
 
 '''
-
-if __name__ == "__main__":
-
-    # ── Mots Clés  ────────────────────────
-    mots_cles = "data analyst"
-    NB_PAGES = 10
-
+def pipeline_complet(
+        mots_cles    = "data engineer",
+        nb_pages_max = 1,
+        skip_extract=False):
     # ── Appel API France Travail  ────────────────────────
     print("\n=== Appel API France Travail ===")
 
-    pipeline_complet(
+    pipeline_complet_ft(
         mots_cles    = mots_cles,
         nb_pages_max = NB_PAGES,
         avec_details = False,  # passer à True pour les descriptions complètes
@@ -60,6 +57,20 @@ if __name__ == "__main__":
         print("Lance d'abord extractor.py pour FranceTravail et WTTJ.")
     else:
         pipeline_normalisation(fichiers, valider=True)
+
+
+
+
+if __name__ == "__main__":
+
+    # ── Mots Clés  ────────────────────────
+    mots_cles = "data analyst"
+    NB_PAGES = 10
+
+    pipeline_complet(   mots_cles    = mots_cles,
+                        nb_pages_max = NB_PAGES,
+                        skip_extract=False)
+
 
 '''
 Lancer le pipeline de récupération de données

@@ -1,4 +1,7 @@
 services:
+
+
+ # ── Bases de données ──────────────────────────────────────
   mongodb:
     image: mongo:8.0
     container_name: my_mongo_job_market
@@ -9,6 +12,9 @@ services:
       - mongo_data:/data/db
     ports:
       - 27017:27017
+    networks:
+      - job-market-backend
+    restart: unless-stopped
 
   postgresql:
     image: postgres:16
@@ -21,7 +27,24 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - job-market-backend
+    restart: unless-stopped
 
+  elasticsearch:
+    container_name: es-container
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+    environment:
+      - xpack.security.enabled=false
+      - "discovery.type=single-node"
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m   # ← limite la RAM utilisée
+    ports:
+      - 9200:9200
+    networks:
+      - job-market-backend
+    restart: unless-stopped
+
+# ── Interfaces d'administration ───────────────────────────
   pgadmin:
     image: dpage/pgadmin4
     container_name: my_pgadmin_job_market
@@ -30,36 +53,63 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     ports:
       - "5050:80"
+    networks:
+      - job-market-backend    # ← doit voir postgresql
+      - job-market-frontend   # ← accessible depuis navigateur
     depends_on:
       - postgresql
-
-  elasticsearch:
-    container_name: es-container
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
-    environment:
-      - xpack.security.enabled=false
-      - "discovery.type=single-node"
-    networks:
-      - es-net
-    ports:
-      - 9200:9200
+    restart: unless-stopped
 
   kibana:
     container_name: kb-container
     image: docker.elastic.co/kibana/kibana:8.17.0
     environment:
       - ELASTICSEARCH_HOSTS=http://es-container:9200
-    networks:
-      - es-net
-    depends_on:
-      - elasticsearch
     ports:
       - 5601:5601
+    networks:
+      - job-market-backend    # ← doit voir elasticsearch
+      - job-market-frontend   # ← accessible depuis navigateur
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
 
+ # ── API FastAPI (étape 4) ─────────────────────────────────
+  api:
+    build:
+      context:    .
+      dockerfile: api/Dockerfile
+    container_name: job_market_api
+    env_file:
+    - .env          # ← Docker lit le .env et injecte les variables
+    environment:
+      MONGO_HOST:        mongodb       # ← nom du service, pas localhost
+      POSTGRES_HOST:     postgresql
+      ELASTIC_HOST:      es-container
+    ports:
+      - "8000:8000"
+    networks:
+      - job-market-backend    # ← parle aux bases
+      - job-market-frontend   # ← répond aux utilisateurs
+    depends_on:
+      - mongodb
+      - postgresql
+      - elasticsearch
+    restart: unless-stopped
+
+# ── Volumes ───────────────────────────────────────────────────
 volumes:
   mongo_data:
   postgres_data:
+  elastic_data:    # ← ajout du volume Elasticsearch
 
+
+# ── Réseaux ───────────────────────────────────────────────────
 networks:
-  es-net:
+  job-market-backend:
     driver: bridge
+    name: job-market-backend
+
+  job-market-frontend:
+    driver: bridge
+    name: job-market-frontend

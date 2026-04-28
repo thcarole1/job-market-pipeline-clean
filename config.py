@@ -16,15 +16,10 @@ RACINE = Path(__file__).parent.resolve()
 # Chemin absolu vers le .env
 ENV_PATH = RACINE / ".env"
 
-# Vérification explicite
-if not ENV_PATH.exists():
-    raise FileNotFoundError(
-        f"Fichier .env introuvable : {ENV_PATH}\n"
-        f"Vérifiez qu'il est bien à la racine du projet."
-    )
-
-# Chargement explicite avec chemin absolu
-load_dotenv(dotenv_path=ENV_PATH, override=True)
+# Charger le .env seulement s'il existe
+# Dans Docker, les variables sont injectées directement
+if ENV_PATH.exists():
+    load_dotenv(dotenv_path=ENV_PATH, override=True)
 
 # MongoDB
 MONGO_HOST     = os.getenv("MONGO_HOST", "localhost")
@@ -38,15 +33,12 @@ POSTGRES_PORT     = int(os.getenv("POSTGRES_PORT", 5432))
 POSTGRES_DB       = os.getenv("POSTGRES_DB", "job_market")
 POSTGRES_USER     = os.getenv("POSTGRES_USER")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-
+SCHEMA_PATH = RACINE / "storage/sql/schema.sql"
 
 # Elasticsearch
 ELASTIC_HOST = os.getenv("ELASTIC_HOST", "localhost")
 ELASTIC_PORT = int(os.getenv("ELASTIC_PORT", 9200))
 NOM_INDEX = "offres"
-SCHEMA_PATH = RACINE / "storage/sql/schema.sql"
-
-
 
 # Nombre de pages d'offres à extraire (pagination)
 NB_PAGES = 5

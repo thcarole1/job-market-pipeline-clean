@@ -1,23 +1,40 @@
 # api/dependencies.py
-"""
-Injection de dépendances FastAPI.
-Chaque fonction est appelée automatiquement par FastAPI
-à chaque requête — la connexion est ouverte et fermée proprement.
-"""
 
+import logging
+import psycopg2
 from pymongo import MongoClient
 from elasticsearch import Elasticsearch
-import psycopg2
+
 from config import (
     MONGO_HOST, MONGO_PORT, MONGO_USERNAME, MONGO_PASSWORD,
-    ELASTIC_HOST, ELASTIC_PORT,
     POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB,
     POSTGRES_USER, POSTGRES_PASSWORD,
+    ELASTIC_HOST, ELASTIC_PORT,
 )
+from ml.search import SearchEngine
+
+logging.basicConfig(
+    level  = logging.INFO,
+    format = "%(asctime)s — %(levelname)s — %(message)s"
+)
+
+# Singleton — initialisé une seule fois
+_search_engine: SearchEngine = None
+
+
+def get_search_engine() -> SearchEngine:
+    """Retourne le SearchEngine TF-IDF — initialisé au premier appel."""
+    global _search_engine
+    if _search_engine is None:
+        logging.info("Initialisation du SearchEngine TF-IDF...")
+        _search_engine = SearchEngine()
+        _search_engine.initialiser()
+        logging.info("SearchEngine prêt.")
+    return _search_engine
 
 
 def get_mongo():
-    """Retourne la base MongoDB job_market."""
+    """Connexion MongoDB."""
     client = MongoClient(
         host     = MONGO_HOST,
         port     = MONGO_PORT,
@@ -31,10 +48,12 @@ def get_mongo():
 
 
 def get_elasticsearch():
-    """Retourne le client Elasticsearch."""
+    """Connexion Elasticsearch."""
     client = Elasticsearch(
         f"http://{ELASTIC_HOST}:{ELASTIC_PORT}",
-        request_timeout=30,
+        request_timeout  = 30,
+        retry_on_timeout = True,
+        max_retries      = 3,
     )
     try:
         yield client
@@ -43,7 +62,7 @@ def get_elasticsearch():
 
 
 def get_postgresql():
-    """Retourne une connexion PostgreSQL."""
+    """Connexion PostgreSQL."""
     conn = psycopg2.connect(
         host     = POSTGRES_HOST,
         port     = POSTGRES_PORT,

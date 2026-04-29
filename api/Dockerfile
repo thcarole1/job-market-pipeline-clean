@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Copier les dépendances en premier
 # (optimisation Docker — cette couche est mise en cache si requirements.txt ne change pas)
-COPY requirements.txt .
+COPY  api/requirements.txt .
 
 # Installer les dépendances
 RUN pip install --no-cache-dir -r requirements.txt

@@ -71,7 +71,7 @@ def pipeline_complet(
     if reset:
         etape(0, "Reset des bases de données")
         try:
-            from reset_databases import reset_all
+            from scripts.reset_databases import reset_all
             reset_all()
             rapport_final["etapes"]["reset"] = "OK"
         except Exception as e:
@@ -221,7 +221,7 @@ if __name__ == "__main__":
 
     # ── Reset uniquement ──────────────────────────────────────
     if args.reset_only:
-        from reset_databases import reset_all
+        from scripts.reset_databases import reset_all
         reset_all()
 
     # ── Collecte dataset ML ───────────────────────────────────

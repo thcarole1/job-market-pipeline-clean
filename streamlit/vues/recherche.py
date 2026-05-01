@@ -1,4 +1,4 @@
-# streamlit/pages/recherche.py
+# streamlit/vues/recherche.py
 """
 Page de recherche d'offres d'emploi.
 Consomme l'API FastAPI via requests.
@@ -16,12 +16,19 @@ def afficher_page_recherche():
     st.caption("Recherche d'offres d'emploi — propulsé par TF-IDF")
 
     # ─────────────────────────────────────────────────────────
+    # INITIALISATION SESSION STATE
+    # ─────────────────────────────────────────────────────────
+
+    if "offre_selectionnee" not in st.session_state:
+        st.session_state["offre_selectionnee"] = None
+    if "details_cache" not in st.session_state:
+        st.session_state["details_cache"] = {}
+
+    # ─────────────────────────────────────────────────────────
     # FORMULAIRE DE RECHERCHE
     # ─────────────────────────────────────────────────────────
 
     with st.form("recherche"):
-
-        # Barre de recherche principale
         q = st.text_input(
             "🔍 Mots-clés",
             placeholder = "data engineer Python Paris...",
@@ -32,17 +39,13 @@ def afficher_page_recherche():
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            ville = st.text_input(
-                "📍 Ville",
-                placeholder = "Paris, Lyon...",
-            )
+            ville = st.text_input("📍 Ville", placeholder="Paris, Lyon...")
 
         with col2:
             contrat = st.selectbox(
                 "📄 Contrat",
-                options      = ["", "CDI", "CDD", "Alternance", "Stage", "Freelance"],
-                index        = 0,
-                format_func  = lambda x: "Tous" if x == "" else x,
+                options     = ["", "CDI", "CDD", "Alternance", "Stage", "Freelance"],
+                format_func = lambda x: "Tous" if x == "" else x,
             )
 
         with col3:
@@ -58,7 +61,6 @@ def afficher_page_recherche():
             teletravail = st.selectbox(
                 "🏠 Télétravail",
                 options     = ["", "remote", "hybrid", "onsite"],
-                index       = 0,
                 format_func = lambda x: {
                     "":       "Tous",
                     "remote": "100% remote",
@@ -79,7 +81,7 @@ def afficher_page_recherche():
             st.markdown("<br>", unsafe_allow_html=True)
             lancer = st.form_submit_button(
                 "🔍 Rechercher",
-                type            = "primary",
+                type                = "primary",
                 use_container_width = True,
             )
 
@@ -93,18 +95,12 @@ def afficher_page_recherche():
             st.warning("Veuillez entrer des mots-clés pour lancer la recherche.")
             return
 
-        # Construire les paramètres
         params = {"q": q, "taille": int(taille)}
-        if ville.strip():
-            params["ville"]       = ville.strip()
-        if contrat:
-            params["contrat"]     = contrat
-        if salaire_min > 0:
-            params["salaire_min"] = int(salaire_min)
-        if teletravail:
-            params["teletravail"] = teletravail
+        if ville.strip():        params["ville"]       = ville.strip()
+        if contrat:              params["contrat"]     = contrat
+        if salaire_min > 0:      params["salaire_min"] = int(salaire_min)
+        if teletravail:          params["teletravail"] = teletravail
 
-        # Appel API
         with st.spinner("Recherche en cours..."):
             try:
                 response = requests.get(
@@ -116,85 +112,93 @@ def afficher_page_recherche():
                 data = response.json()
 
             except requests.exceptions.ConnectionError:
-                st.error(
-                    "❌ Impossible de contacter l'API. "
-                    "Vérifiez que le conteneur Docker est démarré."
-                )
+                st.error("❌ Impossible de contacter l'API. Vérifiez que Docker tourne.")
                 return
             except requests.exceptions.Timeout:
                 st.error("❌ L'API met trop de temps à répondre.")
                 return
-            except requests.exceptions.HTTPError as e:
-                st.error(f"❌ Erreur API : {e}")
-                return
             except Exception as e:
-                st.error(f"❌ Erreur inattendue : {e}")
+                st.error(f"❌ Erreur : {e}")
                 return
 
-        # ─────────────────────────────────────────────────────
-        # AFFICHAGE DES RÉSULTATS
-        # ─────────────────────────────────────────────────────
+        # Sauvegarder les résultats en session
+        st.session_state["resultats"]        = data.get("resultats", [])
+        st.session_state["nb"]               = data.get("nb", 0)
+        st.session_state["filtres"]          = data.get("filtres", {})
+        st.session_state["offre_selectionnee"] = None  # reset sélection
 
-        resultats = data.get("resultats", [])
-        nb        = data.get("nb", 0)
-        filtres   = data.get("filtres", {})
+    # ─────────────────────────────────────────────────────────
+    # AFFICHAGE DES RÉSULTATS
+    # ─────────────────────────────────────────────────────────
 
-        # En-tête résultats
-        col_info, col_filtres = st.columns([2, 3])
-        with col_info:
-            if nb == 0:
-                st.warning("Aucun résultat trouvé pour cette recherche.")
-                return
-            st.success(f"**{nb} offre{'s' if nb > 1 else ''}** trouvée{'s' if nb > 1 else ''}")
+    if "resultats" not in st.session_state:
+        return
 
-        with col_filtres:
-            if filtres:
-                tags = " ".join([
-                    f"`{k} : {v}`"
-                    for k, v in filtres.items()
-                    if v is not None
-                ])
-                st.markdown(f"Filtres actifs : {tags}")
+    resultats = st.session_state["resultats"]
+    nb        = st.session_state["nb"]
+    filtres   = st.session_state.get("filtres", {})
 
-        st.divider()
+    if not resultats:
+        st.warning("Aucun résultat trouvé pour cette recherche.")
+        return
 
-        # Cartes résultats
+    # En-tête résultats
+    col_info, col_filtres = st.columns([2, 3])
+    with col_info:
+        st.success(f"**{nb} offre{'s' if nb > 1 else ''}** trouvée{'s' if nb > 1 else ''}")
+    with col_filtres:
+        if filtres:
+            tags = " ".join([
+                f"`{k} : {v}`"
+                for k, v in filtres.items() if v is not None
+            ])
+            st.markdown(f"Filtres actifs : {tags}")
+
+    st.divider()
+
+    # ── Deux colonnes : liste à gauche, détail à droite ───────
+    col_liste, col_detail = st.columns([1, 1])
+
+    with col_liste:
         for i, offre in enumerate(resultats, start=1):
             _afficher_carte_offre(i, offre)
 
+    with col_detail:
+        offre_id = st.session_state.get("offre_selectionnee")
+        if offre_id:
+            _afficher_detail_offre(offre_id)
+        else:
+            st.info("👈 Cliquez sur une offre pour voir son détail.")
+
+
+# ─────────────────────────────────────────────────────────────
+# CARTE OFFRE
+# ─────────────────────────────────────────────────────────────
 
 def _afficher_carte_offre(rang: int, offre: dict):
-    """Affiche une offre sous forme de carte expansible."""
+    """Affiche une offre sous forme de carte avec bouton de détail."""
 
-    # Construire le titre de l'expander
-    titre        = offre.get("titre", "Titre non renseigné")
-    ville        = offre.get("localisation_ville", "")
-    contrat      = offre.get("type_contrat", "")
-    score        = offre.get("score", 0)
+    titre    = offre.get("titre", "Titre non renseigné")
+    ville    = offre.get("localisation_ville", "")
+    contrat  = offre.get("type_contrat", "")
+    score    = offre.get("score", 0)
+    offre_id = offre.get("id", "")
 
-    label_ville   = f"📍 {ville}"  if ville   else ""
+    label_ville   = f"📍 {ville}"   if ville   else ""
     label_contrat = f"📄 {contrat}" if contrat else ""
-    label_score   = f"Score : {score:.3f}"
+
+    # La carte est sélectionnée si c'est l'offre affichée à droite
+    est_selectionnee = st.session_state.get("offre_selectionnee") == offre_id
 
     header = f"**{rang}.** {titre}"
     if label_ville or label_contrat:
         header += f"  —  {label_ville}  {label_contrat}"
 
-    with st.expander(header, expanded=(rang <= 3)):
+    with st.expander(header, expanded=est_selectionnee):
 
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
 
         with col1:
-            st.metric(
-                "📍 Ville",
-                offre.get("localisation_ville") or "N/A"
-            )
-        with col2:
-            st.metric(
-                "📄 Contrat",
-                offre.get("type_contrat") or "N/A"
-            )
-        with col3:
             sal_min = offre.get("salaire_min")
             sal_max = offre.get("salaire_max")
             if sal_min:
@@ -202,40 +206,48 @@ def _afficher_carte_offre(rang: int, offre: dict):
                 if sal_max:
                     salaire += f" — {int(sal_max):,}€".replace(",", " ")
             else:
-                salaire = "Non renseigné"
+                salaire = "N/A"
             st.metric("💶 Salaire", salaire)
 
-        with col4:
+        with col2:
             teletravail = offre.get("teletravail", "")
             label_tt = {
-                "remote": "🏠 100% remote",
+                "remote": "🏠 Remote",
                 "hybrid": "🏠 Hybride",
                 "onsite": "🏢 Présentiel",
             }.get(teletravail, "N/A")
             st.metric("🏠 Télétravail", label_tt)
 
-        # Informations secondaires
-        col5, col6 = st.columns(2)
-        with col5:
-            st.caption(f"Source : {offre.get('source', 'N/A')}")
-        with col6:
-            st.caption(label_score)
+        with col3:
+            st.metric("🎯 Score", f"{score:.3f}")
 
-        # Bouton détail
-        offre_id = offre.get("id", "")
+        st.caption(f"Source : {offre.get('source', 'N/A')}")
+
+        # ── Bouton — stocke l'id dans session_state ───────────
         if offre_id:
             if st.button(
-                "Voir le détail complet",
+                "📋 Voir le détail",
                 key  = f"detail_{offre_id}_{rang}",
+                type = "primary" if est_selectionnee else "secondary",
             ):
-                _afficher_detail_offre(offre_id)
+                # Mémoriser l'offre sélectionnée
+                # Si déjà sélectionnée → fermer (toggle)
+                if st.session_state["offre_selectionnee"] == offre_id:
+                    st.session_state["offre_selectionnee"] = None
+                else:
+                    st.session_state["offre_selectionnee"] = offre_id
+                st.rerun()
 
+
+# ─────────────────────────────────────────────────────────────
+# DÉTAIL D'UNE OFFRE
+# ─────────────────────────────────────────────────────────────
 
 @st.cache_data(ttl=300)
 def _charger_detail(offre_id: str) -> dict:
     """
-    Charge le détail complet d'une offre depuis MongoDB via l'API.
-    Résultat mis en cache 5 minutes pour éviter les appels répétés.
+    Charge le détail depuis PostgreSQL via l'API.
+    Mis en cache 5 minutes.
     """
     response = requests.get(
         f"{API_URL}/jobs/{offre_id}",
@@ -246,29 +258,61 @@ def _charger_detail(offre_id: str) -> dict:
 
 
 def _afficher_detail_offre(offre_id: str):
-    """Affiche le détail complet d'une offre dans un dialogue."""
-    try:
-        offre = _charger_detail(offre_id)
-    except Exception as e:
-        st.error(f"Impossible de charger le détail : {e}")
+    """Affiche le détail complet dans la colonne droite."""
+
+    with st.spinner("Chargement du détail..."):
+        try:
+            offre = _charger_detail(offre_id)
+        except Exception as e:
+            st.error(f"Impossible de charger le détail : {e}")
+            return
+
+    if not offre:
+        st.error("Détail non disponible.")
         return
 
-    st.markdown("---")
     st.subheader(f"📋 {offre.get('titre', 'Détail offre')}")
 
-    # Description
-    description = offre.get("description", "")
-    if description:
-        with st.expander("📝 Description complète", expanded=True):
-            st.markdown(description[:3000])
-            if len(description) > 3000:
-                st.caption("(description tronquée à 3000 caractères)")
+    # Infos principales
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("📍 Ville",    offre.get("localisation_ville") or "N/A")
+        st.metric("📄 Contrat",  offre.get("type_contrat") or "N/A")
+    with col2:
+        sal_min = offre.get("salaire_min")
+        sal_max = offre.get("salaire_max")
+        if sal_min:
+            salaire = f"{int(sal_min):,}€".replace(",", " ")
+            if sal_max:
+                salaire += f" — {int(sal_max):,}€".replace(",", " ")
+        else:
+            salaire = "Non renseigné"
+        st.metric("💶 Salaire", salaire)
+
+        teletravail = offre.get("teletravail", "")
+        label_tt = {
+            "remote": "🏠 100% remote",
+            "hybrid": "🏠 Hybride",
+            "onsite": "🏢 Présentiel",
+        }.get(teletravail, "N/A")
+        st.metric("🏠 Télétravail", label_tt)
+
+    st.divider()
 
     # Compétences
     competences = offre.get("competences", [])
     if competences:
         st.markdown("**🛠️ Compétences requises**")
         st.markdown(" ".join([f"`{c}`" for c in competences[:20]]))
+        st.markdown("")
+
+    # Description
+    description = offre.get("description", "")
+    if description:
+        st.markdown("**📝 Description**")
+        st.markdown(description[:2000])
+        if len(description) > 2000:
+            st.caption("(description tronquée à 2000 caractères)")
 
     # Missions
     missions = offre.get("missions", [])
@@ -277,7 +321,15 @@ def _afficher_detail_offre(offre_id: str):
         for mission in missions[:5]:
             st.markdown(f"- {mission}")
 
-    # Lien
-    url = offre.get("url", "")
-    if url:
-        st.link_button("🔗 Voir l'offre originale", url)
+    st.divider()
+
+    # Lien + bouton fermer
+    col_url, col_close = st.columns([2, 1])
+    with col_url:
+        url = offre.get("url", "")
+        if url:
+            st.link_button("🔗 Voir l'offre originale", url)
+    with col_close:
+        if st.button("✕ Fermer", key=f"close_{offre_id}"):
+            st.session_state["offre_selectionnee"] = None
+            st.rerun()

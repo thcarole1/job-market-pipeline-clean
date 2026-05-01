@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from pymongo.database import Database
 from ml.search import SearchEngine
-from api.dependencies import get_mongo, get_search_engine
+from api.dependencies import get_mongo, get_search_engine, get_postgresql
 
 router = APIRouter(prefix="/jobs", tags=["Offres"])
 
@@ -46,13 +46,78 @@ def recherche(
 @router.get("/{offre_id}")
 def detail_offre(
     offre_id: str,
-    db:       Database = Depends(get_mongo),
+    conn     = Depends(get_postgresql),
 ):
-    """Détail complet d'une offre depuis MongoDB."""
-    offre = db["offres"].find_one({"id": offre_id}, {"_id": 0})
-    if not offre:
+    """Détail complet d'une offre depuis PostgreSQL."""
+    cursor = conn.cursor()
+
+    # Récupérer l'offre principale
+    cursor.execute("""
+        SELECT
+            o.id,
+            o.source,
+            o.titre,
+            o.entreprise,
+            o.description,
+            o.localisation_ville,
+            o.localisation_dept,
+            o.type_contrat,
+            o.teletravail,
+            o.salaire_min,
+            o.salaire_max,
+            o.experience_min,
+            o.secteur,
+            o.nb_employes,
+            o.date_publication,
+            o.date_extraction,
+            o.url
+        FROM offres o
+        WHERE o.id = %s
+    """, (offre_id,))
+
+    colonnes = [desc[0] for desc in cursor.description]
+    row      = cursor.fetchone()
+
+    if not row:
         raise HTTPException(
             status_code = 404,
             detail      = f"Offre '{offre_id}' introuvable."
         )
-    return offre
+
+    offre = dict(zip(colonnes, row))
+
+    # Récupérer les compétences
+    cursor.execute("""
+        SELECT competence FROM competences
+        WHERE offre_id = %s
+        ORDER BY competence
+    """, (offre_id,))
+    offre["competences"] = [r[0] for r in cursor.fetchall()]
+
+    # Récupérer les missions
+    cursor.execute("""
+        SELECT mission FROM missions
+        WHERE offre_id = %s
+    """, (offre_id,))
+    offre["missions"] = [r[0] for r in cursor.fetchall()]
+
+    # Récupérer les avantages
+    cursor.execute("""
+        SELECT avantage FROM avantages
+        WHERE offre_id = %s
+    """, (offre_id,))
+    offre["avantages"] = [r[0] for r in cursor.fetchall()]
+
+    # Nettoyer les valeurs NaN non sérialisables en JSON
+    import math
+    def nettoyer(v):
+        if v is None:
+            return None
+        try:
+            if isinstance(v, float) and math.isnan(v):
+                return None
+        except TypeError:
+            pass
+        return v
+
+    return {k: nettoyer(v) for k, v in offre.items()}

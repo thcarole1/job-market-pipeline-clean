@@ -90,6 +90,7 @@ def detail_offre(
     cursor.execute("""
         SELECT competence FROM competences
         WHERE offre_id = %s
+        GROUP BY competence
         ORDER BY competence
     """, (offre_id,))
     offre["competences"] = [r[0] for r in cursor.fetchall()]
